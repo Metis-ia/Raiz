@@ -1,10 +1,14 @@
 from fastapi import FastAPI
 # Importa o Middleware do CORS
-from fastapi.middleware.cors import CORSMiddleware 
+from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
-from .routers import product_router, inventory_router, order_router
+# Importa os routers existentes e o novo de autenticação
+from .routers import product_router, inventory_router, order_router, auth_router
 from .routers.inventory_router import locations_router
+# Importa os novos modelos de usuário para a criação das tabelas
+from .models import user_models
 
+# Garante que TODAS as tabelas, incluindo as de usuários e cargos, sejam criadas
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -13,10 +17,10 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# --- CONFIGURAÇÃO DO CORS (A PARTE MAIS IMPORTANTE PARA O ERRO ATUAL) ---
+# --- CONFIGURAÇÃO DO CORS (MANTIDA COMO ESTAVA) ---
 # Lista de origens que podem fazer requisições para a nossa API
 origins = [
-    "http://localhost:3000", # Endereço do nosso frontend Next.js
+    "http://localhost:3000", # Endereço do seu frontend
 ]
 
 app.add_middleware(
@@ -29,7 +33,11 @@ app.add_middleware(
 # --- FIM DA CONFIGURAÇÃO DO CORS ---
 
 
-# Inclui todos os routers na aplicação
+# --- Inclusão dos Routers na aplicação ---
+# Adiciona o router de autenticação
+app.include_router(auth_router.router, tags=["Autenticação e Usuários"])
+
+# Mantém os routers existentes
 app.include_router(product_router.router)
 app.include_router(inventory_router.inventory_router)
 app.include_router(locations_router)
